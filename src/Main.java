@@ -8,50 +8,34 @@ public class Main {
     public static final Map<Integer, Integer> sizeToFreq = new HashMap<>();
     static int maxSize = 0;
     public static void main(String[] args) {
+
         for (int i = 0; i < 1000; i++) {
-            new Thread(() ->{
+            new Thread(() -> {
                 String text;
-                int count = 0;
                 text = generateRoute("RLRFR", 100);
-                for (char ch : text.toCharArray()) {
-                    if (ch == 'R'){
-                        count++;
+                Matcher m = Pattern.compile("(R)\\1+").matcher(text);
+                while (m.find()) {
+                    String sub = m.group();
+                    if (maxSize < sub.length()) {
+                        maxSize = sub.length();
                     }
-//                    System.out.println("Число поворотов направо в строке " + text.substring(0, 10) + "... -> " + " равно: " + count);
-                }
-                synchronized (sizeToFreq){
-                    int countR = 0;
-                    Matcher m = Pattern.compile("(.)\\1+").matcher(text);
-                    while (m.find()){
-                        countR++;
-                        String sub = m.group();
-                        if (sub.length() > maxSize){
-                            maxSize = sub.length();
-                        }
-                        if (!sizeToFreq.containsKey(sub.length())){
-                            sizeToFreq.put(sub.length(), countR);
-                        }
-                        else {
-                            sizeToFreq.put(sub.length(), countR + 1);
+                    synchronized (sizeToFreq) {
+                        if (!sizeToFreq.containsKey(sub.length())) {
+                            sizeToFreq.put(sub.length(), 1);
+                        } else {
+                            sizeToFreq.put(sub.length(), sizeToFreq.get(sub.length()) + 1);
                         }
                     }
-                    sizeToFreq.notify();
                 }
+
             }).start();
         }
-        synchronized (sizeToFreq){
-            System.out.println(sizeToFreq);
-            try {
-                sizeToFreq.wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
 
-        System.out.println("Самое частое количество повторений " + maxSize + " (встретилось " + sizeToFreq.get(maxSize) + " раз)");
+        System.out.println("Самое частое количество повторений " + maxSize + " (встретилось " + sizeToFreq.get(maxSize) + " раз(а))");
         System.out.println("Другие размеры: " + sizeToFreq);
 
     }
+
     public static String generateRoute(String letters, int length) {
         Random random = new Random();
         StringBuilder route = new StringBuilder();
